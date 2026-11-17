@@ -14,7 +14,8 @@ export default function OpcaoSelecionavel({ rotulo, selecionada, onPress }: Prop
       onPress={onPress}
       activeOpacity={0.8}
       accessibilityRole="radio"
-      accessibilityState={{ selected: selecionada, checked: selecionada }}
+      aria-checked={selecionada}
+      aria-selected={selecionada}
       accessibilityLabel={rotulo}
       style={[styles.opcao, selecionada && styles.opcaoSelecionada]}
     >

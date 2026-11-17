@@ -1,5 +1,4 @@
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { Doacao } from '../types/doacao';
 
 // Lista de rotas do app e os parâmetros que cada uma recebe.
 export type RotasParamList = {
@@ -7,9 +6,9 @@ export type RotasParamList = {
   Pontos: undefined;
   PontoDetalhe: { id: string };
   PontoForm: { id?: string } | undefined;
-  DoacaoForm: { doacao?: Doacao } | undefined;
+  DoacaoForm: { id?: string } | undefined;
   Historico: undefined;
-  DoacaoDetalhe: { doacao: Doacao };
+  DoacaoDetalhe: { id: string };
 };
 
 export type TelaProps<Nome extends keyof RotasParamList> = NativeStackScreenProps<

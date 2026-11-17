@@ -30,7 +30,7 @@ export default function HistoricoScreen({ navigation }: TelaProps<'Historico'>) 
   );
 
   const abrirDetalhe = useCallback(
-    (doacao: Doacao) => navigation.navigate('DoacaoDetalhe', { doacao }),
+    (doacao: Doacao) => navigation.navigate('DoacaoDetalhe', { id: doacao.id }),
     [navigation],
   );
 

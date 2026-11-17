@@ -6,6 +6,7 @@ import DoacaoFormScreen from '../screens/DoacaoFormScreen';
 import HistoricoScreen from '../screens/HistoricoScreen';
 import InicioScreen from '../screens/InicioScreen';
 import PontoDetalheScreen from '../screens/PontoDetalheScreen';
+import PontoFormScreen from '../screens/PontoFormScreen';
 import PontosScreen from '../screens/PontosScreen';
 import { cores } from '../theme';
 import { RotasParamList } from './types';
@@ -33,6 +34,7 @@ export default function AppNavigator() {
           component={PontoDetalheScreen}
           options={{ title: 'Detalhes do ponto' }}
         />
+        <Stack.Screen name="PontoForm" component={PontoFormScreen} options={{ title: 'Cadastrar ponto' }} />
         <Stack.Screen
           name="DoacaoForm"
           component={DoacaoFormScreen}

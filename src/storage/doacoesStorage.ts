@@ -35,3 +35,9 @@ export async function salvarDoacao(dados: NovaDoacao): Promise<Doacao> {
   await gravarTodas([doacao, ...atuais]);
   return doacao;
 }
+
+/** Remove a doação com este id. As outras ficam como estão. */
+export async function excluirDoacao(id: string): Promise<void> {
+  const atuais = await listarDoacoes();
+  await gravarTodas(atuais.filter((d) => d.id !== id));
+}

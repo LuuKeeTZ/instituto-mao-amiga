@@ -2,7 +2,7 @@ import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import TipoBadge from '../components/TipoBadge';
 import { PONTOS_EXEMPLO } from '../data/pontosExemplo';
 import { TelaProps } from '../navigation/types';
-import { cores, espaco, raio } from '../theme';
+import { cores, espaco, LARGURA_MAXIMA, raio } from '../theme';
 
 export default function PontoDetalheScreen({ route }: TelaProps<'PontoDetalhe'>) {
   const ponto = PONTOS_EXEMPLO.find((p) => p.id === route.params.id);
@@ -46,7 +46,13 @@ export default function PontoDetalheScreen({ route }: TelaProps<'PontoDetalhe'>)
 
 const styles = StyleSheet.create({
   tela: { flex: 1, backgroundColor: cores.fundo },
-  conteudo: { padding: espaco.lg, gap: espaco.md },
+  conteudo: {
+    padding: espaco.lg,
+    gap: espaco.md,
+    width: '100%',
+    maxWidth: LARGURA_MAXIMA,
+    alignSelf: 'center',
+  },
   nome: { fontSize: 22, fontWeight: '800', color: cores.texto },
   bloco: {
     backgroundColor: cores.superficie,

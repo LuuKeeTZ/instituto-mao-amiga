@@ -1,7 +1,7 @@
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import BotaoAcao from '../components/BotaoAcao';
 import { TelaProps } from '../navigation/types';
-import { cores, espaco, raio } from '../theme';
+import { cores, espaco, LARGURA_MAXIMA, raio } from '../theme';
 
 export default function InicioScreen({ navigation }: TelaProps<'Inicio'>) {
   return (
@@ -27,7 +27,13 @@ export default function InicioScreen({ navigation }: TelaProps<'Inicio'>) {
 
 const styles = StyleSheet.create({
   tela: { flex: 1, backgroundColor: cores.fundo },
-  conteudo: { padding: espaco.lg, gap: espaco.xl },
+  conteudo: {
+    padding: espaco.lg,
+    gap: espaco.xl,
+    width: '100%',
+    maxWidth: LARGURA_MAXIMA,
+    alignSelf: 'center',
+  },
   boasVindas: {
     backgroundColor: cores.primaria,
     borderRadius: raio.md,

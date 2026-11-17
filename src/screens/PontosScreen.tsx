@@ -3,7 +3,7 @@ import { FlatList, StyleSheet, Text, View } from 'react-native';
 import PontoCard from '../components/PontoCard';
 import { PONTOS_EXEMPLO } from '../data/pontosExemplo';
 import { TelaProps } from '../navigation/types';
-import { cores, espaco } from '../theme';
+import { cores, espaco, LARGURA_MAXIMA } from '../theme';
 import { Ponto } from '../types/ponto';
 
 export default function PontosScreen({ navigation }: TelaProps<'Pontos'>) {
@@ -30,7 +30,7 @@ export default function PontosScreen({ navigation }: TelaProps<'Pontos'>) {
 
 const styles = StyleSheet.create({
   tela: { flex: 1, backgroundColor: cores.fundo },
-  lista: { padding: espaco.lg },
+  lista: { padding: espaco.lg, width: '100%', maxWidth: LARGURA_MAXIMA, alignSelf: 'center' },
   titulo: {
     fontSize: 15,
     color: cores.textoSuave,

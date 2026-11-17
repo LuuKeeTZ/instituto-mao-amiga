@@ -79,7 +79,12 @@ export default function DoacaoFormScreen({ navigation, route }: TelaProps<'Doaca
         rotulo="O que você vai doar?"
         placeholder="Ex.: roupa, arroz, cobertor"
         value={valores.tipoItem}
-        onChangeText={(t) => alterar('tipoItem', t)}
+        // Duas linhas visíveis: um nome longo quebra a linha em vez de ficar cortado.
+        multiline
+        numberOfLines={2}
+        submitBehavior="blurAndSubmit"
+        style={styles.campoLongo}
+        onChangeText={(t) => alterar('tipoItem', t.replace(/\n/g, ' '))}
         erro={erros.tipoItem}
       />
       <CampoTexto
@@ -120,4 +125,5 @@ const styles = StyleSheet.create({
   rotulo: { fontSize: 14, fontWeight: '700', color: cores.texto },
   opcoes: { flexDirection: 'row', flexWrap: 'wrap', gap: espaco.sm },
   erro: { fontSize: 13, color: cores.erro },
+  campoLongo: { paddingVertical: espaco.sm, textAlignVertical: 'top' },
 });

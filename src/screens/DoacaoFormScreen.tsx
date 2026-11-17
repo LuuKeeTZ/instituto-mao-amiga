@@ -1,4 +1,3 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useEffect, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import BotaoAcao from '../components/BotaoAcao';
@@ -6,21 +5,22 @@ import CampoTexto from '../components/CampoTexto';
 import OpcaoSelecionavel from '../components/OpcaoSelecionavel';
 import TelaFormulario from '../components/TelaFormulario';
 import { PONTOS_EXEMPLO } from '../data/pontosExemplo';
+import { listarDoacoes, salvarDoacao } from '../storage/doacoesStorage';
 import { cores, espaco, raio } from '../theme';
-import { Doacao, DoacaoFormValores, ErrosDoacao } from '../types/doacao';
+import { DoacaoFormValores, ErrosDoacao } from '../types/doacao';
 import { avisar } from '../utils/dialogos';
 import { temErros, validarDoacao } from '../utils/validacaoDoacao';
 
-const CHAVE_ULTIMA = '@maoamiga/ultima-doacao';
 const VAZIO: DoacaoFormValores = { tipoItem: '', quantidade: '', pontoDestino: '' };
 
 export default function DoacaoFormScreen() {
   const [valores, setValores] = useState<DoacaoFormValores>(VAZIO);
   const [erros, setErros] = useState<ErrosDoacao>({});
-  const [ultima, setUltima] = useState<Doacao | null>(null);
+  const [salvando, setSalvando] = useState(false);
+  const [totalSalvas, setTotalSalvas] = useState(0);
 
   useEffect(() => {
-    AsyncStorage.getItem(CHAVE_ULTIMA).then((json) => setUltima(json ? JSON.parse(json) : null));
+    listarDoacoes().then((lista) => setTotalSalvas(lista.length));
   }, []);
 
   function alterar(campo: keyof DoacaoFormValores, texto: string) {
@@ -33,17 +33,21 @@ export default function DoacaoFormScreen() {
     setErros(encontrados);
     if (temErros(encontrados)) return;
 
-    const doacao: Doacao = {
-      id: Date.now().toString(36),
-      tipoItem: valores.tipoItem.trim(),
-      quantidade: Number(valores.quantidade),
-      pontoDestino: valores.pontoDestino,
-      criadoEm: new Date().toISOString(),
-    };
-    await AsyncStorage.setItem(CHAVE_ULTIMA, JSON.stringify(doacao));
-    setUltima(doacao);
-    setValores(VAZIO);
-    avisar('Doação registrada', `${doacao.quantidade} × ${doacao.tipoItem} para ${doacao.pontoDestino}.`);
+    setSalvando(true);
+    try {
+      const doacao = await salvarDoacao({
+        tipoItem: valores.tipoItem.trim(),
+        quantidade: Number(valores.quantidade),
+        pontoDestino: valores.pontoDestino,
+      });
+      setTotalSalvas((n) => n + 1);
+      setValores(VAZIO);
+      avisar('Doação registrada', `${doacao.quantidade} × ${doacao.tipoItem} para ${doacao.pontoDestino}.`);
+    } catch {
+      avisar('Não foi possível salvar', 'Tente de novo. O que você digitou foi mantido.');
+    } finally {
+      setSalvando(false);
+    }
   }
 
   return (
@@ -77,13 +81,14 @@ export default function DoacaoFormScreen() {
       </View>
       {erros.pontoDestino ? <Text style={styles.erro}>{erros.pontoDestino}</Text> : null}
 
-      <BotaoAcao titulo="Registrar doação" onPress={registrar} />
+      <BotaoAcao titulo="Registrar doação" onPress={registrar} carregando={salvando} />
 
-      {ultima ? (
-        <View style={styles.ultima}>
-          <Text style={styles.rotulo}>Última doação registrada</Text>
+      {totalSalvas > 0 ? (
+        <View style={styles.contador}>
           <Text style={styles.texto}>
-            {ultima.quantidade} × {ultima.tipoItem} → {ultima.pontoDestino}
+            {totalSalvas === 1
+              ? '1 doação registrada neste aparelho.'
+              : `${totalSalvas} doações registradas neste aparelho.`}
           </Text>
         </View>
       ) : null}
@@ -96,7 +101,7 @@ const styles = StyleSheet.create({
   opcoes: { flexDirection: 'row', flexWrap: 'wrap', gap: espaco.sm },
   erro: { fontSize: 13, color: cores.erro },
   texto: { fontSize: 15, color: cores.texto },
-  ultima: {
+  contador: {
     marginTop: espaco.sm,
     padding: espaco.md,
     borderRadius: raio.md,

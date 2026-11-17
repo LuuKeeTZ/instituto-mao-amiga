@@ -1,5 +1,6 @@
 export type TipoPonto = 'coleta' | 'distribuição';
 
+/** Ponto como a API devolve (PontoResponseDTO). */
 export interface Ponto {
   id: string;
   nome: string;
@@ -7,6 +8,7 @@ export interface Ponto {
   bairro: string;
   horario: string;
   tipo: TipoPonto;
-  /** O que o ponto recebe (coleta) ou entrega (distribuição). */
-  itens: string[];
 }
+
+/** O que o app envia para cadastrar ou editar (PontoRequestDTO). */
+export type PontoDados = Omit<Ponto, 'id'>;

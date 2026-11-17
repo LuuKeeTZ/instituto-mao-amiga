@@ -1,5 +1,6 @@
 import { useHeaderHeight } from '@react-navigation/elements';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useFocusEffect } from '@react-navigation/native';
+import { useCallback, useLayoutEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   FlatList,
@@ -10,6 +11,7 @@ import {
   View,
 } from 'react-native';
 import BotaoAcao from '../components/BotaoAcao';
+import BotaoCabecalho from '../components/BotaoCabecalho';
 import CampoBusca from '../components/CampoBusca';
 import EstadoMensagem from '../components/EstadoMensagem';
 import PontoCard from '../components/PontoCard';
@@ -102,9 +104,25 @@ export default function PontosScreen({ navigation }: TelaProps<'Pontos'>) {
     carregarPagina(0);
   }, [termo, carregarPagina]);
 
-  useEffect(() => {
-    recomecar();
-  }, [recomecar]);
+  // Recarrega ao abrir, a cada busca nova e ao voltar de outra tela
+  // (assim um ponto cadastrado, editado ou excluído já aparece certo na lista).
+  useFocusEffect(
+    useCallback(() => {
+      recomecar();
+    }, [recomecar]),
+  );
+
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      headerRight: () => (
+        <BotaoCabecalho
+          titulo="+ Novo"
+          rotuloAcessivel="Cadastrar novo ponto"
+          onPress={() => navigation.navigate('PontoForm')}
+        />
+      ),
+    });
+  }, [navigation]);
 
   const abrirDetalhe = useCallback(
     (ponto: Ponto) => navigation.navigate('PontoDetalhe', { id: ponto.id }),

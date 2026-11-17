@@ -1,9 +1,10 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useEffect, useState } from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import BotaoAcao from '../components/BotaoAcao';
 import CampoTexto from '../components/CampoTexto';
 import OpcaoSelecionavel from '../components/OpcaoSelecionavel';
+import TelaFormulario from '../components/TelaFormulario';
 import { PONTOS_EXEMPLO } from '../data/pontosExemplo';
 import { cores, espaco, raio } from '../theme';
 import { Doacao, DoacaoFormValores, ErrosDoacao } from '../types/doacao';
@@ -46,7 +47,7 @@ export default function DoacaoFormScreen() {
   }
 
   return (
-    <ScrollView style={styles.tela} contentContainerStyle={styles.conteudo}>
+    <TelaFormulario>
       <CampoTexto
         rotulo="O que você vai doar?"
         placeholder="Ex.: roupa, arroz, cobertor"
@@ -86,13 +87,11 @@ export default function DoacaoFormScreen() {
           </Text>
         </View>
       ) : null}
-    </ScrollView>
+    </TelaFormulario>
   );
 }
 
 const styles = StyleSheet.create({
-  tela: { flex: 1, backgroundColor: cores.fundo },
-  conteudo: { padding: espaco.lg, gap: espaco.md },
   rotulo: { fontSize: 14, fontWeight: '700', color: cores.texto },
   opcoes: { flexDirection: 'row', flexWrap: 'wrap', gap: espaco.sm },
   erro: { fontSize: 13, color: cores.erro },

@@ -26,6 +26,9 @@ export const espaco = {
 /** Altura e largura mínimas de qualquer elemento tocável (WCAG 2.5.5). */
 export const TOQUE_MINIMO = 44;
 
+/** Em telas largas (tablet, navegador) o conteúdo fica centralizado até esta largura. */
+export const LARGURA_MAXIMA = 640;
+
 export const raio = {
   sm: 8,
   md: 14,

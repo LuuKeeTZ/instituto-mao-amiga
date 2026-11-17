@@ -2,6 +2,7 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import BotaoVoltar from '../components/BotaoVoltar';
 import DoacaoFormScreen from '../screens/DoacaoFormScreen';
+import HistoricoScreen from '../screens/HistoricoScreen';
 import InicioScreen from '../screens/InicioScreen';
 import PontoDetalheScreen from '../screens/PontoDetalheScreen';
 import PontosScreen from '../screens/PontosScreen';
@@ -36,6 +37,7 @@ export default function AppNavigator() {
           component={DoacaoFormScreen}
           options={{ title: 'Registrar doação' }}
         />
+        <Stack.Screen name="Historico" component={HistoricoScreen} options={{ title: 'Minhas doações' }} />
       </Stack.Navigator>
     </NavigationContainer>
   );

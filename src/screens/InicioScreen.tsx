@@ -20,6 +20,11 @@ export default function InicioScreen({ navigation }: TelaProps<'Inicio'>) {
           variante="secundario"
           onPress={() => navigation.navigate('DoacaoForm')}
         />
+        <BotaoAcao
+          titulo="Minhas doações"
+          variante="secundario"
+          onPress={() => navigation.navigate('Historico')}
+        />
       </View>
     </ScrollView>
   );

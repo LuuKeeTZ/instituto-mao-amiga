@@ -6,6 +6,7 @@ export type RotasParamList = {
   Pontos: undefined;
   PontoDetalhe: { id: string };
   DoacaoForm: undefined;
+  Historico: undefined;
 };
 
 export type TelaProps<Nome extends keyof RotasParamList> = NativeStackScreenProps<

@@ -504,6 +504,37 @@ Script que mede todos os tocáveis (mínimo 44x44), procura rolagem horizontal, 
 | Base (Issue #06) em 360x640 e 768x1024 | [360x640](docs/testes/issue06-360x640.png) · [768x1024](docs/testes/issue06-768x1024.png) |
 | N1 (Issue #14) em 360x640 e 768x1024 | [360x640](docs/testes/issue14-360x640.png) · [768x1024](docs/testes/issue14-768x1024.png) |
 
+## Prints dos testes manuais
+
+Testes feitos à mão seguindo o roteiro de testes, com a API rodando localmente e o app no navegador (modo celular do DevTools).
+
+### API (Swagger)
+
+| Teste | Print |
+|---|---|
+| Busca paginada sem filtro (200, `content` + `page`) | ![](docs/prints/p01-api-busca-paginada.png) |
+| Cadastro de ponto com campos vazios → 400 | ![](docs/prints/p02-api-ponto-400.png) |
+| Ponto inexistente → 404 | ![](docs/prints/p03-api-ponto-404.png) |
+| Doação com quantidade 0 → 400 | ![](docs/prints/p04-api-doacao-400.png) |
+| Doação inexistente → 404 | ![](docs/prints/p05-api-doacao-404.png) |
+| Doação continua depois de reiniciar a API | ![](docs/prints/p06-api-persistencia.png) |
+
+### App
+
+| Tela | Print |
+|---|---|
+| Lista de pontos vinda da API | ![](docs/prints/p07-app-lista-pontos.png) |
+| Busca por nome ou bairro | ![](docs/prints/p08-app-busca.png) |
+| Detalhe do ponto | ![](docs/prints/p09-app-detalhe-ponto.png) |
+| Cadastro de ponto (tipo destacado) | ![](docs/prints/p10-app-cadastro-ponto.png) |
+| Edição de ponto ("Salvar alterações") | ![](docs/prints/p11-app-editar-ponto.png) |
+| Confirmação de exclusão | ![](docs/prints/p12-app-excluir-ponto.png) |
+| Meus pontos (favoritos) | ![](docs/prints/p13-app-meus-pontos.png) |
+| Cadastro de doação (ponto de destino da API) | ![](docs/prints/p14-app-cadastro-doacao.png) |
+| Histórico com a doação nova no topo | ![](docs/prints/p15-app-historico.png) |
+| Doação editada (mesma data de registro) | ![](docs/prints/p16-app-editar-doacao.png) |
+| API desligada: mensagem de erro | ![](docs/prints/p17-app-api-desligada.png) |
+
 ## Limitações conhecidas
 
 - O app **não foi testado num celular**: todos os testes foram no navegador. O endereço da API está fixo em `src/services/api.ts` e precisa ser trocado pelo IP da máquina que roda a API.

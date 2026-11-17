@@ -1,13 +1,20 @@
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import TipoBadge from '../components/TipoBadge';
-import { Ponto } from '../types/ponto';
+import { PONTOS_EXEMPLO } from '../data/pontosExemplo';
+import { TelaProps } from '../navigation/types';
 import { cores, espaco, raio } from '../theme';
 
-interface Props {
-  ponto: Ponto;
-}
+export default function PontoDetalheScreen({ route }: TelaProps<'PontoDetalhe'>) {
+  const ponto = PONTOS_EXEMPLO.find((p) => p.id === route.params.id);
 
-export default function PontoDetalheScreen({ ponto }: Props) {
+  if (!ponto) {
+    return (
+      <View style={[styles.tela, styles.conteudo]}>
+        <Text style={styles.valor}>Ponto não encontrado.</Text>
+      </View>
+    );
+  }
+
   const rotuloItens = ponto.tipo === 'coleta' ? 'Aceita' : 'Entrega';
   return (
     <ScrollView style={styles.tela} contentContainerStyle={styles.conteudo}>

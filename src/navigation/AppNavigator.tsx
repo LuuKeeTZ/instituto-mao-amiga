@@ -5,6 +5,7 @@ import DoacaoDetalheScreen from '../screens/DoacaoDetalheScreen';
 import DoacaoFormScreen from '../screens/DoacaoFormScreen';
 import HistoricoScreen from '../screens/HistoricoScreen';
 import InicioScreen from '../screens/InicioScreen';
+import MeusPontosScreen from '../screens/MeusPontosScreen';
 import PontoDetalheScreen from '../screens/PontoDetalheScreen';
 import PontoFormScreen from '../screens/PontoFormScreen';
 import PontosScreen from '../screens/PontosScreen';
@@ -35,6 +36,7 @@ export default function AppNavigator() {
           options={{ title: 'Detalhes do ponto' }}
         />
         <Stack.Screen name="PontoForm" component={PontoFormScreen} options={{ title: 'Cadastrar ponto' }} />
+        <Stack.Screen name="MeusPontos" component={MeusPontosScreen} options={{ title: 'Meus pontos' }} />
         <Stack.Screen
           name="DoacaoForm"
           component={DoacaoFormScreen}

@@ -16,6 +16,11 @@ export default function InicioScreen({ navigation }: TelaProps<'Inicio'>) {
       <View style={styles.acoes}>
         <BotaoAcao titulo="Ver pontos de coleta" onPress={() => navigation.navigate('Pontos')} />
         <BotaoAcao
+          titulo="♥ Meus pontos"
+          variante="secundario"
+          onPress={() => navigation.navigate('MeusPontos')}
+        />
+        <BotaoAcao
           titulo="Registrar doação"
           variante="secundario"
           onPress={() => navigation.navigate('DoacaoForm')}

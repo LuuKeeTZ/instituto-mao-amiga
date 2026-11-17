@@ -52,6 +52,7 @@ cd api
 | Método | URL | Respostas |
 |---|---|---|
 | GET | `http://localhost:8080/api/v1/pontos` | 200 |
+| GET | `http://localhost:8080/api/v1/pontos/filtro?filtro=&page=0&size=10` | 200 (paginado) |
 | GET | `http://localhost:8080/api/v1/pontos/{id}` | 200, 404 |
 | POST | `http://localhost:8080/api/v1/pontos` | 201, 400 |
 | PUT | `http://localhost:8080/api/v1/pontos/{id}` | 200, 400, 404 |
@@ -84,6 +85,148 @@ Prints do Swagger (gerados com Playwright executando cada endpoint):
 
 ![POST com campos vazios: 400](api/docs/swagger/pontos-06-cadastrar-vazio-400.png)
 ![GET de id inexistente: 404](api/docs/swagger/pontos-07-buscar-inexistente-404.png)
+
+### Busca paginada de pontos
+
+`GET http://localhost:8080/api/v1/pontos/filtro?filtro=...&page=0&size=10`
+
+- `filtro` (opcional): procura no **nome ou no bairro**, sem diferenciar maiúsculas (`@Query` no `PontoRepository`). Sem `filtro`, devolve todos.
+- Padrão: 10 itens por página, em ordem de nome (`@PageableDefault(size = 10, sort = "nome")`). `sort=bairro,asc` troca a ordem.
+- Resposta no formato `content` + `page` (`spring.data.web.pageable.serialization-mode=via_dto`).
+- A carga inicial tem 26 pontos.
+
+Exemplos reais (com `size=3` para caber aqui):
+
+**1. Sem filtro (primeira página)**
+
+```http
+GET /api/v1/pontos/filtro?page=0&size=3
+```
+
+```json
+{
+  "content": [
+    {
+      "id": "ba386881-c4a5-42ee-8b95-ae0b7a27d557",
+      "nome": "Armazém do Bem Campinas",
+      "endereco": "Rua Senador Jaime, nº 455",
+      "bairro": "Campinas",
+      "horario": "Ter a Sáb, 9h às 16h",
+      "tipo": "distribuição"
+    },
+    {
+      "id": "83b4e537-95d4-487c-874b-e81409294d6f",
+      "nome": "Armário Comunitário Setor Sul",
+      "endereco": "Rua 90, nº 520",
+      "bairro": "Setor Sul",
+      "horario": "Qua a Sáb, 9h às 15h",
+      "tipo": "distribuição"
+    },
+    {
+      "id": "a2c7c320-0a9a-4070-a7ce-f9f508f1f1e6",
+      "nome": "Banco de Alimentos Setor Central",
+      "endereco": "Avenida Goiás, nº 1.010",
+      "bairro": "Setor Central",
+      "horario": "Seg a Sex, 8h às 16h",
+      "tipo": "distribuição"
+    }
+  ],
+  "page": {
+    "size": 3,
+    "number": 0,
+    "totalElements": 26,
+    "totalPages": 9
+  }
+}
+```
+
+**2. Filtrando por bairro ("jardim")**
+
+```http
+GET /api/v1/pontos/filtro?filtro=jardim&page=0&size=3
+```
+
+```json
+{
+  "content": [
+    {
+      "id": "834267a0-faba-48d3-b1bf-de3910d72973",
+      "nome": "Partilha do Pão Jardim Guanabara",
+      "endereco": "Rua JG-12, nº 300",
+      "bairro": "Jardim Guanabara",
+      "horario": "Ter a Sex, 7h às 9h",
+      "tipo": "distribuição"
+    },
+    {
+      "id": "34c9c7f9-10e5-4d2c-9a0f-1b71db6627c7",
+      "nome": "Ponto Amigo Jardim América",
+      "endereco": "Rua C-140, nº 300",
+      "bairro": "Jardim América",
+      "horario": "Seg, Qua e Sex, 13h às 18h",
+      "tipo": "coleta"
+    },
+    {
+      "id": "cb73c9a6-a50c-4c53-992b-2c8c2b82a9e9",
+      "nome": "Ponto Amigo Jardim Goiás",
+      "endereco": "Rua 55, nº 230",
+      "bairro": "Jardim Goiás",
+      "horario": "Ter e Qui, 10h às 17h",
+      "tipo": "coleta"
+    }
+  ],
+  "page": {
+    "size": 3,
+    "number": 0,
+    "totalElements": 5,
+    "totalPages": 2
+  }
+}
+```
+
+**3. Segunda página**
+
+```http
+GET /api/v1/pontos/filtro?page=1&size=3
+```
+
+```json
+{
+  "content": [
+    {
+      "id": "c30cbac9-3ebc-4499-a73c-0df0ef10138e",
+      "nome": "Caixa de Doações Parque Amazônia",
+      "endereco": "Avenida Rio Verde, nº 2.300",
+      "bairro": "Parque Amazônia",
+      "horario": "Todos os dias, 10h às 20h",
+      "tipo": "coleta"
+    },
+    {
+      "id": "a8f1f955-24c0-4a2c-8188-4f9534cbc043",
+      "nome": "Casa Solidária Setor Negrão de Lima",
+      "endereco": "Rua Benjamin Constant, nº 270",
+      "bairro": "Setor Negrão de Lima",
+      "horario": "Seg a Sex, 9h às 17h",
+      "tipo": "coleta"
+    },
+    {
+      "id": "878fb7ca-fdad-443d-9144-c96ae9b621a8",
+      "nome": "Casa Solidária Vila Nova",
+      "endereco": "Rua 214, nº 120",
+      "bairro": "Vila Nova",
+      "horario": "Seg a Sex, 8h às 17h",
+      "tipo": "coleta"
+    }
+  ],
+  "page": {
+    "size": 3,
+    "number": 1,
+    "totalElements": 26,
+    "totalPages": 9
+  }
+}
+```
+
+Print do Swagger da busca: [pontos-09-filtro-paginado-200.png](api/docs/swagger/pontos-09-filtro-paginado-200.png)
 
 ## Roteiro de demonstração da N1 (até 3 minutos)
 

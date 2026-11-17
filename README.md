@@ -33,6 +33,58 @@ src/
 docs/testes/            prints dos testes de layout
 ```
 
+## API (pasta `api/`)
+
+A API em Spring Boot fica na pasta [`api/`](api/) deste mesmo repositório.
+
+```bash
+cd api
+./mvnw spring-boot:run        # Windows: mvnw.cmd spring-boot:run
+```
+
+- Java 21 (Maven Wrapper incluso, não precisa instalar o Maven)
+- Banco H2 gravado em arquivo: `api/data/maoamiga.mv.db` (fora do Git). Apagar a pasta `api/data/` recria o banco com a carga inicial.
+- Swagger UI: http://localhost:8080/swagger-ui.html
+- Console do H2: http://localhost:8080/h2-console (JDBC URL `jdbc:h2:file:./data/maoamiga`, usuário `sa`, sem senha)
+
+### Pontos de coleta
+
+| Método | URL | Respostas |
+|---|---|---|
+| GET | `http://localhost:8080/api/v1/pontos` | 200 |
+| GET | `http://localhost:8080/api/v1/pontos/{id}` | 200, 404 |
+| POST | `http://localhost:8080/api/v1/pontos` | 201, 400 |
+| PUT | `http://localhost:8080/api/v1/pontos/{id}` | 200, 400, 404 |
+| DELETE | `http://localhost:8080/api/v1/pontos/{id}` | 204, 404 |
+
+Corpo do POST/PUT (todos os campos obrigatórios; `tipo` é `coleta` ou `distribuição`):
+
+```json
+{
+  "nome": "Bazar Solidário Setor Sul",
+  "endereco": "Rua 83, nº 450",
+  "bairro": "Setor Sul",
+  "horario": "Sáb, 8h às 14h",
+  "tipo": "coleta"
+}
+```
+
+Prints do Swagger (gerados com Playwright executando cada endpoint):
+
+| Chamada | Print |
+|---|---|
+| GET lista → 200 | [pontos-01-listar-200.png](api/docs/swagger/pontos-01-listar-200.png) |
+| GET por id → 200 | [pontos-02-buscar-por-id-200.png](api/docs/swagger/pontos-02-buscar-por-id-200.png) |
+| POST → 201 | [pontos-03-cadastrar-201.png](api/docs/swagger/pontos-03-cadastrar-201.png) |
+| PUT → 200 | [pontos-04-editar-200.png](api/docs/swagger/pontos-04-editar-200.png) |
+| DELETE → 204 | [pontos-05-excluir-204.png](api/docs/swagger/pontos-05-excluir-204.png) |
+| POST com nome e bairro vazios → **400** | [pontos-06-cadastrar-vazio-400.png](api/docs/swagger/pontos-06-cadastrar-vazio-400.png) |
+| GET id inexistente → **404** | [pontos-07-buscar-inexistente-404.png](api/docs/swagger/pontos-07-buscar-inexistente-404.png) |
+| PUT id inexistente → **404** | [pontos-08-editar-inexistente-404.png](api/docs/swagger/pontos-08-editar-inexistente-404.png) |
+
+![POST com campos vazios: 400](api/docs/swagger/pontos-06-cadastrar-vazio-400.png)
+![GET de id inexistente: 404](api/docs/swagger/pontos-07-buscar-inexistente-404.png)
+
 ## Roteiro de demonstração da N1 (até 3 minutos)
 
 1. **Registrar**: na tela inicial, "Registrar doação" → Roupa, 12, Casa Solidária Vila Nova → registrar. Repetir com Arroz (5) e Roupa de cama (3).

@@ -1,21 +1,57 @@
+import { useCallback, useEffect, useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import EstadoMensagem from '../components/EstadoMensagem';
 import TipoBadge from '../components/TipoBadge';
-import { PONTOS_EXEMPLO } from '../data/pontosExemplo';
 import { TelaProps } from '../navigation/types';
+import { buscarPontoPorId } from '../services/pontosService';
 import { cores, espaco, LARGURA_MAXIMA, raio } from '../theme';
+import { Ponto } from '../types/ponto';
+import { ehNaoEncontrado, mensagemDeErro } from '../utils/mensagemErro';
+
+type Estado =
+  | { tipo: 'carregando' }
+  | { tipo: 'pronto'; ponto: Ponto }
+  | { tipo: 'naoEncontrado' }
+  | { tipo: 'erro'; mensagem: string };
 
 export default function PontoDetalheScreen({ route }: TelaProps<'PontoDetalhe'>) {
-  const ponto = PONTOS_EXEMPLO.find((p) => p.id === route.params.id);
+  const { id } = route.params; // a navegação passa só o id; o resto vem da API
+  const [estado, setEstado] = useState<Estado>({ tipo: 'carregando' });
 
-  if (!ponto) {
+  const carregar = useCallback(async () => {
+    setEstado({ tipo: 'carregando' });
+    try {
+      setEstado({ tipo: 'pronto', ponto: await buscarPontoPorId(id) });
+    } catch (e) {
+      setEstado(ehNaoEncontrado(e) ? { tipo: 'naoEncontrado' } : { tipo: 'erro', mensagem: mensagemDeErro(e) });
+    }
+  }, [id]);
+
+  useEffect(() => {
+    carregar();
+  }, [carregar]);
+
+  if (estado.tipo === 'carregando') return <EstadoMensagem carregando titulo="Carregando ponto..." />;
+  if (estado.tipo === 'naoEncontrado') {
     return (
-      <View style={[styles.tela, styles.conteudo]}>
-        <Text style={styles.valor}>Ponto não encontrado.</Text>
-      </View>
+      <EstadoMensagem
+        titulo="Ponto não encontrado."
+        descricao="Ele pode ter sido excluído. Volte para a lista e escolha outro."
+      />
+    );
+  }
+  if (estado.tipo === 'erro') {
+    return (
+      <EstadoMensagem
+        erro
+        titulo="Não foi possível carregar o ponto."
+        descricao={estado.mensagem}
+        acao={{ titulo: 'Tentar de novo', onPress: carregar }}
+      />
     );
   }
 
-  const rotuloItens = ponto.tipo === 'coleta' ? 'Aceita' : 'Entrega';
+  const { ponto } = estado;
   return (
     <ScrollView style={styles.tela} contentContainerStyle={styles.conteudo}>
       <TipoBadge tipo={ponto.tipo} />
@@ -33,12 +69,12 @@ export default function PontoDetalheScreen({ route }: TelaProps<'PontoDetalhe'>)
       </View>
 
       <View style={styles.bloco}>
-        <Text style={styles.rotulo}>{rotuloItens}</Text>
-        {ponto.itens.map((item) => (
-          <Text key={item} style={styles.valor}>
-            • {item}
-          </Text>
-        ))}
+        <Text style={styles.rotulo}>O que faz</Text>
+        <Text style={styles.valor}>
+          {ponto.tipo === 'coleta'
+            ? 'Recebe doações: leve aqui o que você quer doar.'
+            : 'Distribui doações para as famílias atendidas.'}
+        </Text>
       </View>
     </ScrollView>
   );

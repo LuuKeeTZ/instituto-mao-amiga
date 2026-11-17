@@ -5,6 +5,7 @@ import { FlatList, KeyboardAvoidingView, Platform, StyleSheet, View } from 'reac
 import CampoBusca from '../components/CampoBusca';
 import DoacaoItem from '../components/DoacaoItem';
 import EstadoMensagem from '../components/EstadoMensagem';
+import ResumoTotais from '../components/ResumoTotais';
 import { TelaProps } from '../navigation/types';
 import { listarDoacoes } from '../storage/doacoesStorage';
 import { cores, espaco, LARGURA_MAXIMA } from '../theme';
@@ -74,6 +75,7 @@ export default function HistoricoScreen({ navigation }: TelaProps<'Historico'>) 
         contentContainerStyle={styles.lista}
         keyboardShouldPersistTaps="handled"
         keyboardDismissMode="on-drag"
+        ListHeaderComponent={<ResumoTotais doacoes={doacoes} />}
         ItemSeparatorComponent={() => <View style={{ height: espaco.sm }} />}
         renderItem={({ item }) => <DoacaoItem doacao={item} onPress={abrirDetalhe} />}
         ListEmptyComponent={

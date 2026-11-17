@@ -37,7 +37,13 @@ export default function DoacaoDetalheScreen({ route, navigation }: TelaProps<'Do
         <Linha rotulo="Registrada em" valor={formatarDataHora(doacao.criadoEm)} />
       </View>
 
-      <BotaoAcao titulo="Excluir doação" variante="perigo" onPress={pedirExclusao} carregando={excluindo} />
+      <View style={styles.acoes}>
+        <BotaoAcao
+          titulo="Editar doação"
+          onPress={() => navigation.navigate('DoacaoForm', { doacao })}
+        />
+        <BotaoAcao titulo="Excluir doação" variante="perigo" onPress={pedirExclusao} carregando={excluindo} />
+      </View>
     </ScrollView>
   );
 }
@@ -68,6 +74,7 @@ const styles = StyleSheet.create({
     padding: espaco.lg,
     gap: espaco.md,
   },
+  acoes: { gap: espaco.md },
   linha: { gap: 2 },
   rotulo: {
     fontSize: 12,

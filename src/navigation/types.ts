@@ -6,7 +6,7 @@ export type RotasParamList = {
   Inicio: undefined;
   Pontos: undefined;
   PontoDetalhe: { id: string };
-  DoacaoForm: undefined;
+  DoacaoForm: { doacao?: Doacao } | undefined;
   Historico: undefined;
   DoacaoDetalhe: { doacao: Doacao };
 };

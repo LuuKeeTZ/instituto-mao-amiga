@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useLayoutEffect, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import BotaoAcao from '../components/BotaoAcao';
 import CampoTexto from '../components/CampoTexto';
@@ -6,41 +6,66 @@ import OpcaoSelecionavel from '../components/OpcaoSelecionavel';
 import TelaFormulario from '../components/TelaFormulario';
 import { PONTOS_EXEMPLO } from '../data/pontosExemplo';
 import { TelaProps } from '../navigation/types';
-import { salvarDoacao } from '../storage/doacoesStorage';
+import { atualizarDoacao, salvarDoacao } from '../storage/doacoesStorage';
 import { cores, espaco } from '../theme';
-import { DoacaoFormValores, ErrosDoacao } from '../types/doacao';
+import { Doacao, DoacaoFormValores, ErrosDoacao } from '../types/doacao';
 import { avisar } from '../utils/dialogos';
 import { temErros, validarDoacao } from '../utils/validacaoDoacao';
 
 const VAZIO: DoacaoFormValores = { tipoItem: '', quantidade: '', pontoDestino: '' };
 
-export default function DoacaoFormScreen({ navigation }: TelaProps<'DoacaoForm'>) {
-  const [valores, setValores] = useState<DoacaoFormValores>(VAZIO);
+function paraValores(doacao: Doacao): DoacaoFormValores {
+  return {
+    tipoItem: doacao.tipoItem,
+    quantidade: String(doacao.quantidade),
+    pontoDestino: doacao.pontoDestino,
+  };
+}
+
+/**
+ * Um formulário só para as duas situações:
+ * sem parâmetro é cadastro; com `doacao` nos parâmetros é edição.
+ */
+export default function DoacaoFormScreen({ navigation, route }: TelaProps<'DoacaoForm'>) {
+  const emEdicao = route.params?.doacao;
+  const [valores, setValores] = useState<DoacaoFormValores>(
+    emEdicao ? paraValores(emEdicao) : VAZIO,
+  );
   const [erros, setErros] = useState<ErrosDoacao>({});
   const [salvando, setSalvando] = useState(false);
+
+  useLayoutEffect(() => {
+    navigation.setOptions({ title: emEdicao ? 'Editar doação' : 'Registrar doação' });
+  }, [navigation, emEdicao]);
 
   function alterar(campo: keyof DoacaoFormValores, texto: string) {
     setValores((atual) => ({ ...atual, [campo]: texto }));
     if (erros[campo]) setErros((atual) => ({ ...atual, [campo]: undefined }));
   }
 
-  async function registrar() {
+  async function salvar() {
     const encontrados = validarDoacao(valores);
     setErros(encontrados);
     if (temErros(encontrados)) return;
 
+    const dados = {
+      tipoItem: valores.tipoItem.trim(),
+      quantidade: Number(valores.quantidade),
+      pontoDestino: valores.pontoDestino,
+    };
+
     setSalvando(true);
     try {
-      const doacao = await salvarDoacao({
-        tipoItem: valores.tipoItem.trim(),
-        quantidade: Number(valores.quantidade),
-        pontoDestino: valores.pontoDestino,
-      });
-      avisar(
-        'Doação registrada',
-        `${doacao.quantidade} × ${doacao.tipoItem} para ${doacao.pontoDestino}.`,
-        () => navigation.goBack(),
-      );
+      if (emEdicao) {
+        const atualizada = await atualizarDoacao({ ...emEdicao, ...dados });
+        // Volta ao detalhe já com os valores novos.
+        navigation.popTo('DoacaoDetalhe', { doacao: atualizada });
+      } else {
+        const nova = await salvarDoacao(dados);
+        avisar('Doação registrada', `${nova.quantidade} × ${nova.tipoItem} para ${nova.pontoDestino}.`, () =>
+          navigation.goBack(),
+        );
+      }
     } catch {
       avisar('Não foi possível salvar', 'Tente de novo. O que você digitou foi mantido.');
     } finally {
@@ -79,8 +104,14 @@ export default function DoacaoFormScreen({ navigation }: TelaProps<'DoacaoForm'>
       </View>
       {erros.pontoDestino ? <Text style={styles.erro}>{erros.pontoDestino}</Text> : null}
 
-      <BotaoAcao titulo="Registrar doação" onPress={registrar} carregando={salvando} />
-
+      <BotaoAcao
+        titulo={emEdicao ? 'Salvar alterações' : 'Registrar doação'}
+        onPress={salvar}
+        carregando={salvando}
+      />
+      {emEdicao ? (
+        <BotaoAcao titulo="Cancelar" variante="secundario" onPress={() => navigation.goBack()} />
+      ) : null}
     </TelaFormulario>
   );
 }

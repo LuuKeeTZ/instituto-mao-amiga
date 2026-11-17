@@ -36,6 +36,19 @@ export async function salvarDoacao(dados: NovaDoacao): Promise<Doacao> {
   return doacao;
 }
 
+/**
+ * Substitui a doação que tem o mesmo id (sem criar outra).
+ * O id e a data de registro originais são preservados.
+ */
+export async function atualizarDoacao(doacao: Doacao): Promise<Doacao> {
+  const atuais = await listarDoacoes();
+  const original = atuais.find((d) => d.id === doacao.id);
+  if (!original) throw new Error('Doação não encontrada');
+  const atualizada: Doacao = { ...doacao, id: original.id, criadoEm: original.criadoEm };
+  await gravarTodas(atuais.map((d) => (d.id === doacao.id ? atualizada : d)));
+  return atualizada;
+}
+
 /** Remove a doação com este id. As outras ficam como estão. */
 export async function excluirDoacao(id: string): Promise<void> {
   const atuais = await listarDoacoes();

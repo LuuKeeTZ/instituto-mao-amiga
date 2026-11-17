@@ -1,0 +1,40 @@
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import BotaoAcao from '../components/BotaoAcao';
+import { TelaProps } from '../navigation/types';
+import { cores, espaco, raio } from '../theme';
+
+export default function InicioScreen({ navigation }: TelaProps<'Inicio'>) {
+  return (
+    <ScrollView style={styles.tela} contentContainerStyle={styles.conteudo}>
+      <View style={styles.boasVindas}>
+        <Text style={styles.titulo}>Mão Amiga</Text>
+        <Text style={styles.subtitulo}>
+          Encontre um ponto perto de você e registre o que você doou.
+        </Text>
+      </View>
+
+      <View style={styles.acoes}>
+        <BotaoAcao titulo="Ver pontos de coleta" onPress={() => navigation.navigate('Pontos')} />
+        <BotaoAcao
+          titulo="Registrar doação"
+          variante="secundario"
+          onPress={() => navigation.navigate('DoacaoForm')}
+        />
+      </View>
+    </ScrollView>
+  );
+}
+
+const styles = StyleSheet.create({
+  tela: { flex: 1, backgroundColor: cores.fundo },
+  conteudo: { padding: espaco.lg, gap: espaco.xl },
+  boasVindas: {
+    backgroundColor: cores.primaria,
+    borderRadius: raio.md,
+    padding: espaco.xl,
+    gap: espaco.sm,
+  },
+  titulo: { fontSize: 28, fontWeight: '800', color: cores.branco },
+  subtitulo: { fontSize: 16, color: cores.primariaClara, lineHeight: 22 },
+  acoes: { gap: espaco.md },
+});

@@ -241,6 +241,51 @@ GET /api/v1/pontos/filtro?page=1&size=3
 
 Print do Swagger da busca: [pontos-09-filtro-paginado-200.png](api/docs/swagger/pontos-09-filtro-paginado-200.png)
 
+### Doações
+
+| Método | URL | Respostas |
+|---|---|---|
+| GET | `http://localhost:8080/api/v1/doacoes/filtro?filtro=&page=0&size=10` | 200 (paginado, mais nova primeiro) |
+| GET | `http://localhost:8080/api/v1/doacoes/{id}` | 200, 404 |
+| POST | `http://localhost:8080/api/v1/doacoes` | 201, 400 |
+| PUT | `http://localhost:8080/api/v1/doacoes/{id}` | 200, 400, 404 |
+| DELETE | `http://localhost:8080/api/v1/doacoes/{id}` | 204, 404 |
+
+- `filtro` procura no **tipo de item**, sem diferenciar maiúsculas; a ordem padrão é `criadoEm` decrescente (`@PageableDefault(sort = "criadoEm", direction = Sort.Direction.DESC)`).
+- `criadoEm` é preenchido pela API (`LocalDateTime.now()` no service) no cadastro; o app não envia e a edição não muda.
+- `tipoItem` e `pontoDestino` obrigatórios; `quantidade` obrigatória e maior que zero.
+
+Corpo do POST/PUT e resposta:
+
+```json
+// envio
+{ "tipoItem": "Feijão", "quantidade": 10, "pontoDestino": "Coleta Cidadã Setor Bueno" }
+
+// resposta 201
+{
+  "id": "6d8d94f4-e260-4457-966e-23233807296a",
+  "tipoItem": "Feijão",
+  "quantidade": 10,
+  "pontoDestino": "Coleta Cidadã Setor Bueno",
+  "criadoEm": "2026-11-16T21:49:47.512"
+}
+```
+
+| Chamada | Print |
+|---|---|
+| GET filtro "roupa" → 200 | [doacoes-01-filtro-200.png](api/docs/swagger/doacoes-01-filtro-200.png) |
+| GET por id → 200 | [doacoes-02-buscar-por-id-200.png](api/docs/swagger/doacoes-02-buscar-por-id-200.png) |
+| POST → 201 | [doacoes-03-cadastrar-201.png](api/docs/swagger/doacoes-03-cadastrar-201.png) |
+| PUT → 200 | [doacoes-04-editar-200.png](api/docs/swagger/doacoes-04-editar-200.png) |
+| DELETE → 204 | [doacoes-05-excluir-204.png](api/docs/swagger/doacoes-05-excluir-204.png) |
+| POST com quantidade 0 → **400** | [doacoes-06-quantidade-zero-400.png](api/docs/swagger/doacoes-06-quantidade-zero-400.png) |
+| POST com tipo vazio e quantidade negativa → **400** | [doacoes-07-tipo-vazio-400.png](api/docs/swagger/doacoes-07-tipo-vazio-400.png) |
+| GET id inexistente → **404** | [doacoes-08-buscar-inexistente-404.png](api/docs/swagger/doacoes-08-buscar-inexistente-404.png) |
+| PUT id inexistente → **404** | [doacoes-09-editar-inexistente-404.png](api/docs/swagger/doacoes-09-editar-inexistente-404.png) |
+
+![POST com quantidade 0: 400](api/docs/swagger/doacoes-06-quantidade-zero-400.png)
+![GET de doação inexistente: 404](api/docs/swagger/doacoes-08-buscar-inexistente-404.png)
+
 ## Roteiro de demonstração da N1 (até 3 minutos)
 
 1. **Registrar**: na tela inicial, "Registrar doação" → Roupa, 12, Casa Solidária Vila Nova → registrar. Repetir com Arroz (5) e Roupa de cama (3).

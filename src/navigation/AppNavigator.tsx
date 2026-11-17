@@ -1,5 +1,6 @@
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import BotaoVoltar from '../components/BotaoVoltar';
 import DoacaoFormScreen from '../screens/DoacaoFormScreen';
 import InicioScreen from '../screens/InicioScreen';
 import PontoDetalheScreen from '../screens/PontoDetalheScreen';
@@ -14,12 +15,14 @@ export default function AppNavigator() {
     <NavigationContainer>
       <Stack.Navigator
         initialRouteName="Inicio"
-        screenOptions={{
+        screenOptions={({ navigation }) => ({
           headerStyle: { backgroundColor: cores.primaria },
           headerTintColor: cores.branco,
           headerTitleStyle: { fontWeight: '700' },
           contentStyle: { backgroundColor: cores.fundo },
-        }}
+          headerLeft: ({ canGoBack, tintColor }) =>
+            canGoBack ? <BotaoVoltar onPress={navigation.goBack} cor={tintColor} /> : null,
+        })}
       >
         <Stack.Screen name="Inicio" component={InicioScreen} options={{ title: 'Instituto Mão Amiga' }} />
         <Stack.Screen name="Pontos" component={PontosScreen} options={{ title: 'Pontos de coleta' }} />

@@ -1,27 +1,23 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import BotaoAcao from '../components/BotaoAcao';
 import CampoTexto from '../components/CampoTexto';
 import OpcaoSelecionavel from '../components/OpcaoSelecionavel';
 import TelaFormulario from '../components/TelaFormulario';
 import { PONTOS_EXEMPLO } from '../data/pontosExemplo';
-import { listarDoacoes, salvarDoacao } from '../storage/doacoesStorage';
-import { cores, espaco, raio } from '../theme';
+import { TelaProps } from '../navigation/types';
+import { salvarDoacao } from '../storage/doacoesStorage';
+import { cores, espaco } from '../theme';
 import { DoacaoFormValores, ErrosDoacao } from '../types/doacao';
 import { avisar } from '../utils/dialogos';
 import { temErros, validarDoacao } from '../utils/validacaoDoacao';
 
 const VAZIO: DoacaoFormValores = { tipoItem: '', quantidade: '', pontoDestino: '' };
 
-export default function DoacaoFormScreen() {
+export default function DoacaoFormScreen({ navigation }: TelaProps<'DoacaoForm'>) {
   const [valores, setValores] = useState<DoacaoFormValores>(VAZIO);
   const [erros, setErros] = useState<ErrosDoacao>({});
   const [salvando, setSalvando] = useState(false);
-  const [totalSalvas, setTotalSalvas] = useState(0);
-
-  useEffect(() => {
-    listarDoacoes().then((lista) => setTotalSalvas(lista.length));
-  }, []);
 
   function alterar(campo: keyof DoacaoFormValores, texto: string) {
     setValores((atual) => ({ ...atual, [campo]: texto }));
@@ -40,9 +36,11 @@ export default function DoacaoFormScreen() {
         quantidade: Number(valores.quantidade),
         pontoDestino: valores.pontoDestino,
       });
-      setTotalSalvas((n) => n + 1);
-      setValores(VAZIO);
-      avisar('Doação registrada', `${doacao.quantidade} × ${doacao.tipoItem} para ${doacao.pontoDestino}.`);
+      avisar(
+        'Doação registrada',
+        `${doacao.quantidade} × ${doacao.tipoItem} para ${doacao.pontoDestino}.`,
+        () => navigation.goBack(),
+      );
     } catch {
       avisar('Não foi possível salvar', 'Tente de novo. O que você digitou foi mantido.');
     } finally {
@@ -83,15 +81,6 @@ export default function DoacaoFormScreen() {
 
       <BotaoAcao titulo="Registrar doação" onPress={registrar} carregando={salvando} />
 
-      {totalSalvas > 0 ? (
-        <View style={styles.contador}>
-          <Text style={styles.texto}>
-            {totalSalvas === 1
-              ? '1 doação registrada neste aparelho.'
-              : `${totalSalvas} doações registradas neste aparelho.`}
-          </Text>
-        </View>
-      ) : null}
     </TelaFormulario>
   );
 }
@@ -100,12 +89,4 @@ const styles = StyleSheet.create({
   rotulo: { fontSize: 14, fontWeight: '700', color: cores.texto },
   opcoes: { flexDirection: 'row', flexWrap: 'wrap', gap: espaco.sm },
   erro: { fontSize: 13, color: cores.erro },
-  texto: { fontSize: 15, color: cores.texto },
-  contador: {
-    marginTop: espaco.sm,
-    padding: espaco.md,
-    borderRadius: raio.md,
-    backgroundColor: cores.primariaClara,
-    gap: espaco.xs,
-  },
 });

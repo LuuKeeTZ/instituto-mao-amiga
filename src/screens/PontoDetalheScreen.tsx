@@ -1,11 +1,14 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useFocusEffect } from '@react-navigation/native';
+import { useCallback, useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import BotaoAcao from '../components/BotaoAcao';
 import EstadoMensagem from '../components/EstadoMensagem';
 import TipoBadge from '../components/TipoBadge';
 import { TelaProps } from '../navigation/types';
-import { buscarPontoPorId } from '../services/pontosService';
+import { buscarPontoPorId, excluirPonto } from '../services/pontosService';
 import { cores, espaco, LARGURA_MAXIMA, raio } from '../theme';
 import { Ponto } from '../types/ponto';
+import { avisar, confirmarExclusao } from '../utils/dialogos';
 import { ehNaoEncontrado, mensagemDeErro } from '../utils/mensagemErro';
 
 type Estado =
@@ -14,9 +17,10 @@ type Estado =
   | { tipo: 'naoEncontrado' }
   | { tipo: 'erro'; mensagem: string };
 
-export default function PontoDetalheScreen({ route }: TelaProps<'PontoDetalhe'>) {
+export default function PontoDetalheScreen({ route, navigation }: TelaProps<'PontoDetalhe'>) {
   const { id } = route.params; // a navegação passa só o id; o resto vem da API
   const [estado, setEstado] = useState<Estado>({ tipo: 'carregando' });
+  const [excluindo, setExcluindo] = useState(false);
 
   const carregar = useCallback(async () => {
     setEstado({ tipo: 'carregando' });
@@ -27,9 +31,25 @@ export default function PontoDetalheScreen({ route }: TelaProps<'PontoDetalhe'>)
     }
   }, [id]);
 
-  useEffect(() => {
-    carregar();
-  }, [carregar]);
+  // Busca de novo ao voltar da edição, para mostrar os valores novos.
+  useFocusEffect(
+    useCallback(() => {
+      carregar();
+    }, [carregar]),
+  );
+
+  function pedirExclusao(ponto: Ponto) {
+    confirmarExclusao('Excluir ponto?', `"${ponto.nome}" será removido para todos.`, async () => {
+      setExcluindo(true);
+      try {
+        await excluirPonto(ponto.id);
+        navigation.goBack();
+      } catch (e) {
+        setExcluindo(false);
+        avisar('Não foi possível excluir', mensagemDeErro(e));
+      }
+    });
+  }
 
   if (estado.tipo === 'carregando') return <EstadoMensagem carregando titulo="Carregando ponto..." />;
   if (estado.tipo === 'naoEncontrado') {
@@ -76,6 +96,16 @@ export default function PontoDetalheScreen({ route }: TelaProps<'PontoDetalhe'>)
             : 'Distribui doações para as famílias atendidas.'}
         </Text>
       </View>
+
+      <View style={styles.acoes}>
+        <BotaoAcao titulo="Editar ponto" onPress={() => navigation.navigate('PontoForm', { id: ponto.id })} />
+        <BotaoAcao
+          titulo="Excluir ponto"
+          variante="perigo"
+          carregando={excluindo}
+          onPress={() => pedirExclusao(ponto)}
+        />
+      </View>
     </ScrollView>
   );
 }
@@ -89,6 +119,7 @@ const styles = StyleSheet.create({
     maxWidth: LARGURA_MAXIMA,
     alignSelf: 'center',
   },
+  acoes: { gap: espaco.md, marginTop: espaco.sm },
   nome: { fontSize: 22, fontWeight: '800', color: cores.texto },
   bloco: {
     backgroundColor: cores.superficie,

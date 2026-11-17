@@ -1,64 +1,183 @@
 # Instituto Mão Amiga
 
-Aplicativo do Instituto Mão Amiga, em Goiânia: mostra os pontos de coleta e distribuição de doações e guarda o histórico das doações registradas.
+Aplicativo do **Instituto Mão Amiga**, de Goiânia, com a **API própria em Spring Boot** que ele usa. Pelo app dá para encontrar os pontos de coleta e distribuição de doações, cadastrar, editar e excluir pontos, favoritar os pontos mais usados e registrar as doações feitas, com histórico, filtro, edição e exclusão.
 
-Autor: **LuuKeeTZ** — projeto individual da disciplina de Desenvolvimento de Aplicativos.
+Projeto individual da disciplina de Desenvolvimento de Aplicativos, feito em três etapas: **base**, **N1** (histórico de doações no aparelho) e **N2** (API Spring Boot consumida pelo app).
 
-## Tecnologias
+Autor: **LuuKeeTZ** · Repositório: https://github.com/LuuKeeTZ/instituto-mao-amiga
 
-- React Native + Expo (SDK 58) com TypeScript
-- React Navigation (native-stack)
-- AsyncStorage (dados salvos no aparelho)
+---
 
-## Como rodar
+## Sumário
+
+1. [Tecnologias e versões](#tecnologias-e-versões)
+2. [Estrutura do repositório](#estrutura-do-repositório)
+3. [Como rodar a API](#como-rodar-a-api)
+4. [Como rodar o app e onde trocar o IP](#como-rodar-o-app-e-onde-trocar-o-ip)
+5. [Funcionalidades por etapa e issues](#funcionalidades-por-etapa-e-issues)
+6. [Endpoints da API](#endpoints-da-api)
+7. [Decisões técnicas](#decisões-técnicas)
+8. [Roteiro de demonstração (até 3 minutos)](#roteiro-de-demonstração-até-3-minutos)
+9. [Testes realizados](#testes-realizados)
+10. [Limitações conhecidas](#limitações-conhecidas)
+
+---
+
+## Tecnologias e versões
+
+| Parte | Tecnologia | Versão usada |
+|---|---|---|
+| API | Java (Eclipse Temurin) | **21** (21.0.13) |
+| API | Spring Boot (Web MVC, Data JPA, Validation) | 4.1.2 |
+| API | Banco H2 gravado em arquivo | 2.4.240 |
+| API | springdoc-openapi (Swagger UI) | 3.1.0 |
+| API | Lombok | gerenciado pelo Spring Boot |
+| API | Maven (via Maven Wrapper, já incluso) | 3.10.1 |
+| App | Node.js / npm | 26.13.0 / 12.2.2 |
+| App | Expo SDK | 58 (`expo ~58.0.25`) |
+| App | React Native / React | 0.88.1 / 19.3.0 |
+| App | TypeScript | ~6.0.3 |
+| App | React Navigation (native-stack) | 7.x |
+| App | AsyncStorage (só para favoritos) | 2.2.0 |
+| Testes | Playwright (Chromium), fora do repositório | 1.x |
+
+## Estrutura do repositório
+
+O app fica na raiz e a **API fica na pasta [`api/`](api/)** deste mesmo repositório.
+
+```
+.
+├── App.tsx                    entrada do app (só monta a navegação)
+├── src/
+│   ├── services/
+│   │   ├── api.ts             ÚNICO arquivo com fetch: URL da API + get/post/put/del
+│   │   ├── pontosService.ts   operações de pontos (usa o api.ts)
+│   │   └── doacoesService.ts  operações de doações (usa o api.ts)
+│   ├── storage/
+│   │   └── favoritosStorage.ts  ids dos pontos favoritos no AsyncStorage
+│   ├── screens/               uma tela por arquivo
+│   ├── components/            cartões, campos, botões, estados de carregando/erro/vazio
+│   ├── hooks/                 useListaPaginada (rolagem infinita), useFavoritos, useValorAtrasado
+│   ├── navigation/            rotas e parâmetros de cada tela
+│   ├── types/                 Ponto, Doacao, Pagina
+│   ├── utils/                 validações, datas, mensagens de erro, diálogos
+│   └── theme/                 cores, espaçamentos, tamanho mínimo de toque (44)
+├── docs/testes/               prints dos testes de layout em 2 tamanhos de tela
+└── api/
+    ├── pom.xml, mvnw, mvnw.cmd
+    ├── docs/swagger/          prints do Swagger (incluindo 400 e 404)
+    └── src/main/java/com/institutomaoamiga/api/
+        ├── entity/            Ponto, Doacao
+        ├── repository/        PontoRepository, DoacaoRepository (@Query)
+        ├── service/           PontoService, DoacaoService, RecursoNaoEncontradoException
+        ├── controller/        PontoController, DoacaoController
+        ├── dto/               PontoRequestDTO, PontoResponseDTO, DoacaoRequestDTO, DoacaoResponseDTO, ErroRespostaDTO
+        └── config/            TratadorDeErros, PopularPontosIniciais (carga inicial), DocumentacaoApiConfig
+```
+
+## Como rodar a API
+
+Pré-requisito: **Java 21** (`java -version`). Não precisa instalar o Maven, o wrapper baixa sozinho.
+
+```bash
+cd api
+./mvnw spring-boot:run          # Windows: mvnw.cmd spring-boot:run
+```
+
+Ou gerando o `.jar`:
+
+```bash
+cd api
+./mvnw package                  # Windows: mvnw.cmd package
+java -jar target/api-0.0.1-SNAPSHOT.jar
+```
+
+- A API sobe em `http://localhost:8080` (e em `http://<IP-do-computador>:8080` para o celular).
+- **Swagger UI:** http://localhost:8080/swagger-ui.html
+- **Banco H2 em arquivo:** `api/data/maoamiga.mv.db` (fora do Git). Os dados continuam depois de reiniciar a API. Para voltar ao estado inicial, pare a API e apague a pasta `api/data/`.
+- **Carga inicial:** 26 pontos de Goiânia, inseridos só quando a tabela está vazia (não duplica ao reiniciar).
+- Console do H2: http://localhost:8080/h2-console (JDBC URL `jdbc:h2:file:./data/maoamiga`, usuário `sa`, sem senha).
+
+## Como rodar o app e onde trocar o IP
+
+Pré-requisitos: Node.js e npm. Com a API rodando:
 
 ```bash
 npm install
-npx expo start          # Expo Go no celular (QR code)
-npx expo start --web    # no navegador
+npx expo start --web     # no navegador (foi assim que o app foi testado)
+npx expo start           # no celular, lendo o QR code com o Expo Go
 ```
 
-### Endereço da API (onde trocar o IP)
+### Onde trocar o IP
 
-O app só fala com a API por `src/services/api.ts`, e o endereço fica numa constante só:
+O endereço da API fica numa constante só, em **`src/services/api.ts`**:
 
 ```ts
 export const API_URL = 'http://192.168.15.49:8080/api/v1';
 ```
 
-- **No celular (Expo Go)**: troque `192.168.15.49` pelo IPv4 do computador que roda a API (`ipconfig` no Windows, "Endereço IPv4"). Celular e computador precisam estar na mesma rede Wi-Fi, e o firewall do Windows precisa liberar a porta 8080. Não use `localhost`: no celular ele aponta para o próprio celular.
-- **No navegador** (`npx expo start --web`) o mesmo IP funciona, porque o navegador roda no próprio computador.
+1. No computador que roda a API, descubra o IPv4: `ipconfig` no Windows ("Endereço IPv4" do adaptador da rede local) ou `ip addr` no Linux/macOS.
+2. Troque `192.168.15.49` por esse IP e salve (o Expo recarrega o app).
+3. Celular e computador precisam estar na **mesma rede Wi-Fi**, e o firewall precisa liberar a porta **8080**.
+4. Não use `localhost` no celular: lá ele aponta para o próprio celular, não para o computador.
 
-> **Como o app foi testado:** todos os testes do app foram feitos **no navegador** (expo web), com Playwright, porque não havia celular disponível. O teste no celular pela rede local **não foi feito**; os passos acima explicam como fazer.
+> **Como o app foi testado:** todos os testes do app foram feitos **no navegador** (`npx expo start --web`), automatizados com Playwright, porque não havia celular disponível. O navegador roda no mesmo computador e acessa a API pelo mesmo IP da constante. O teste no celular pela rede local **não foi feito**; os passos acima explicam como fazer.
 
-## Estrutura
+## Funcionalidades por etapa e issues
 
+### Base
+- Lista de pontos e detalhe (endereço, horário, o que faz), navegação em pilha entre as telas.
+- Cadastro de doação com validação (tipo, quantidade inteira > 0, ponto de destino).
+- Layout auditado: sem tamanhos fixos que quebram, tocáveis ≥ 44x44, formulários com `KeyboardAvoidingView`.
+
+### N1 — histórico de doações no aparelho
+- Histórico em array no AsyncStorage, com todo o acesso num arquivo só (`doacoesStorage.ts`).
+- Tela "Minhas doações" com `FlatList` e item em `React.memo`; detalhe com exclusão confirmada; edição pelo mesmo formulário; filtro por tipo enquanto digita; resumo com totais por tipo.
+- Na N2 esse armazenamento local foi substituído pela API (o roteiro da N1 está no README da entrega da N1, commit [`cf37ee5`](https://github.com/LuuKeeTZ/instituto-mao-amiga/blob/cf37ee5/README.md)).
+
+### N2 — API própria
+- API Spring Boot com CRUD de pontos e de doações, validação (400), 404, busca paginada e Swagger.
+- App consumindo a API em camadas (`api.ts` → services → telas), com rolagem infinita, busca pela API, CRUD de pontos e de doações, estados de carregando/erro/vazio e mensagens claras com a API desligada.
+- Favoritos guardados no aparelho (só os ids) e tela "Meus pontos" buscando os dados na API.
+
+### As 18 issues
+
+| # | Issue | Etapa |
+|---|---|---|
+| [#1](https://github.com/LuuKeeTZ/instituto-mao-amiga/issues/1) | Issue #03 — Lista e detalhe dos pontos | Base |
+| [#2](https://github.com/LuuKeeTZ/instituto-mao-amiga/issues/2) | Issue #04 — Navegação entre lista e detalhe | Base |
+| [#3](https://github.com/LuuKeeTZ/instituto-mao-amiga/issues/3) | Issue #06 — Layout responsivo do app individual | Base |
+| [#4](https://github.com/LuuKeeTZ/instituto-mao-amiga/issues/4) | Issue #08 — Histórico de doações salvo no aparelho | N1 |
+| [#5](https://github.com/LuuKeeTZ/instituto-mao-amiga/issues/5) | Issue #09 — Tela de histórico com FlatList | N1 |
+| [#6](https://github.com/LuuKeeTZ/instituto-mao-amiga/issues/6) | Issue #10 — Detalhe da doação e exclusão | N1 |
+| [#7](https://github.com/LuuKeeTZ/instituto-mao-amiga/issues/7) | Issue #11 — Editar uma doação | N1 |
+| [#8](https://github.com/LuuKeeTZ/instituto-mao-amiga/issues/8) | Issue #12 — Filtro por tipo de item | N1 |
+| [#9](https://github.com/LuuKeeTZ/instituto-mao-amiga/issues/9) | Issue #13 — Resumo com totais por tipo | N1 |
+| [#10](https://github.com/LuuKeeTZ/instituto-mao-amiga/issues/10) | Issue #14 — Acabamento e roteiro de demonstração | N1 |
+| [#11](https://github.com/LuuKeeTZ/instituto-mao-amiga/issues/11) | [N2-1] CRUD de pontos de coleta na API | N2 |
+| [#12](https://github.com/LuuKeeTZ/instituto-mao-amiga/issues/12) | [N2-2] Busca de pontos com paginação | N2 |
+| [#13](https://github.com/LuuKeeTZ/instituto-mao-amiga/issues/13) | [N2-3] App listando os pontos da API | N2 |
+| [#14](https://github.com/LuuKeeTZ/instituto-mao-amiga/issues/14) | [N2-4] App: cadastrar, editar e excluir pontos | N2 |
+| [#15](https://github.com/LuuKeeTZ/instituto-mao-amiga/issues/15) | [N2-5] CRUD de doações na API | N2 |
+| [#16](https://github.com/LuuKeeTZ/instituto-mao-amiga/issues/16) | [N2-6] Histórico e cadastro de doações pela API | N2 |
+| [#17](https://github.com/LuuKeeTZ/instituto-mao-amiga/issues/17) | [N2-7] Editar e excluir doação pela API | N2 |
+| [#18](https://github.com/LuuKeeTZ/instituto-mao-amiga/issues/18) | [N2-8] Pontos favoritos e roteiro de demonstração | N2 |
+
+Cada issue tem um comentário com o que foi feito, os testes executados e os commits.
+
+## Endpoints da API
+
+Todas as respostas usam DTOs (`record`); a entidade nunca sai do service. Erros seguem o formato:
+
+```json
+{
+  "status": 400,
+  "erro": "Dados inválidos",
+  "mensagem": "Corrija os campos indicados e envie de novo.",
+  "campos": { "nome": "O nome é obrigatório.", "bairro": "O bairro é obrigatório." },
+  "momento": "2026-11-16T21:35:52.6023966"
+}
 ```
-App.tsx                 ponto de entrada (só monta a navegação)
-src/
-  navigation/           rotas e parâmetros de cada tela
-  screens/              uma tela por arquivo
-  components/           peças reaproveitadas (cartões, campos, botões, estados)
-  storage/              acesso ao AsyncStorage (doacoesStorage.ts)
-  utils/                validação, datas, totais e diálogos
-  types/                tipos Ponto e Doacao
-  theme/                cores, espaçamentos e tamanho mínimo de toque
-docs/testes/            prints dos testes de layout
-```
-
-## API (pasta `api/`)
-
-A API em Spring Boot fica na pasta [`api/`](api/) deste mesmo repositório.
-
-```bash
-cd api
-./mvnw spring-boot:run        # Windows: mvnw.cmd spring-boot:run
-```
-
-- Java 21 (Maven Wrapper incluso, não precisa instalar o Maven)
-- Banco H2 gravado em arquivo: `api/data/maoamiga.mv.db` (fora do Git). Apagar a pasta `api/data/` recria o banco com a carga inicial.
-- Swagger UI: http://localhost:8080/swagger-ui.html
-- Console do H2: http://localhost:8080/h2-console (JDBC URL `jdbc:h2:file:./data/maoamiga`, usuário `sa`, sem senha)
 
 ### Pontos de coleta
 
@@ -286,27 +405,111 @@ Corpo do POST/PUT e resposta:
 ![POST com quantidade 0: 400](api/docs/swagger/doacoes-06-quantidade-zero-400.png)
 ![GET de doação inexistente: 404](api/docs/swagger/doacoes-08-buscar-inexistente-404.png)
 
-## Roteiro de demonstração da N1 (até 3 minutos)
-
-1. **Registrar**: na tela inicial, "Registrar doação" → Roupa, 12, Casa Solidária Vila Nova → registrar. Repetir com Arroz (5) e Roupa de cama (3).
-2. **Ver o histórico**: "Minhas doações" mostra as 3 doações (mais nova no topo) e o resumo "3 doações · 20 unidades" com os totais por tipo.
-3. **Filtrar**: digitar "roupa" no campo de busca → aparecem só Roupa e Roupa de cama. Digitar "xyz" → mensagem citando o texto. Limpar → todas voltam.
-4. **Editar**: tocar em Arroz → "Editar doação" → quantidade 8 → "Salvar alterações". O detalhe e o resumo mostram o valor novo.
-5. **Excluir**: no detalhe, "Excluir doação" → confirmar. A doação some do histórico e do resumo.
-6. **Fechar e reabrir o app**: o histórico continua lá (está no AsyncStorage).
-
 ## Decisões técnicas
 
-- **Acesso ao armazenamento num arquivo só** (`src/storage/doacoesStorage.ts`, com `listarDoacoes`, `salvarDoacao`, `atualizarDoacao` e `excluirDoacao`): as telas não conhecem a chave nem o formato JSON. Se o lugar onde os dados ficam mudar, só esse arquivo muda.
-- **Totais calculados, não salvos**: `calcularResumo` roda a cada renderização a partir do array de doações. Não existe um segundo dado para manter sincronizado, então o resumo nunca fica desatualizado depois de registrar, editar ou excluir.
-- **Filtro sem segunda lista**: o único estado é o texto digitado; a lista exibida é calculada a partir dele e do array completo.
-- **Um formulário para cadastrar e editar**: a mesma tela recebe (ou não) a doação nos parâmetros; as validações ficam em `validarDoacao` e valem para os dois casos.
+### Favoritos no aparelho × pontos e doações no servidor
 
-## Testes de layout
+- **Pontos e doações são dados do Instituto**: todos os voluntários precisam ver a mesma lista, um ponto editado tem que aparecer editado para todo mundo, e uma doação registrada não pode sumir se o celular for trocado. Por isso ficam na API, num banco só, com validação no servidor (400 quando o dado é inválido, 404 quando não existe).
+- **Favorito é uma preferência de quem está usando o celular**: não interessa a mais ninguém, não precisa de login e funciona mesmo sem a API para lembrar o que foi marcado. Por isso fica no AsyncStorage do aparelho.
+- **Só os ids ficam guardados**: os dados do ponto (nome, endereço, horário) sempre vêm da API na tela "Meus pontos". Se alguém edita o ponto, o favorito já mostra o valor novo; se o ponto foi excluído, a API responde 404, ele fica de fora da tela e o id sai da lista salva, sem quebrar nada.
 
-Feitos no navegador (`npx expo start --web`) com Playwright, em **360x640** (celular pequeno) e **768x1024** (tablet). Um script mede todos os elementos tocáveis (mínimo 44x44), procura rolagem horizontal, elementos fora da tela e textos cortados, e simula o teclado aberto reduzindo a altura da janela para 360 px e focando cada campo.
+### Acesso à rede só pelo `api.ts`
 
-| Tela | 360x640 | 768x1024 |
+- `src/services/api.ts` é o único arquivo com `fetch`. Ele tem a URL num lugar só, as funções `get`, `post`, `put` e `del`, um tempo limite de 10 s e transforma qualquer resposta de erro numa exceção `ApiErro` com o **status** HTTP (status 0 quando não conseguiu conectar).
+- As telas chamam `pontosService` e `doacoesService` e nunca montam URL. Assim: trocar o IP é mudar uma linha; tratar erro é igual em todo o app (`mensagemDeErro`); e o 404 vira "ponto não encontrado"/"doação não encontrada" de forma consistente.
+
+### Totais calculados, não salvos (N1)
+
+- Na N1 o resumo por tipo era calculado a cada renderização a partir do array de doações, e não salvo à parte: um dado derivado salvo pode ficar desatualizado depois de registrar, editar ou excluir. Na N2, com o histórico paginado pela API, o resumo saiu da tela, como o enunciado permite.
+
+### Outras decisões
+
+- **Um formulário para cadastrar e editar** (pontos e doações): sem parâmetro é cadastro; com `{ id }` é edição, preenchida pela API e com o botão "Salvar alterações". As validações são as mesmas nos dois casos.
+- **Navegação só com o `id`**: os detalhes buscam o dado na API pelo id, então sempre mostram a versão atual e tratam o 404.
+- **Rolagem infinita num hook** (`useListaPaginada`): guarda as páginas já pedidas para nunca pedir a mesma duas vezes, para na última página (`totalPages`) e descarta respostas atrasadas quando a busca muda. É usado na lista de pontos e no histórico.
+- **Erro não finge sucesso**: em 400 ou com a API desligada, o formulário mostra a mensagem (com os campos que a API recusou), mantém o que foi digitado e não volta de tela.
+- **Diálogos no navegador**: o `Alert.alert` do react-native-web não abre nada, então `src/utils/dialogos.ts` usa `Alert.alert` (Cancelar/Excluir) no celular e `window.confirm` no navegador.
+- **`criadoEm` definido pela API**: o app não envia a data; o service usa `LocalDateTime.now()` no cadastro e a coluna não aceita UPDATE.
+
+## Roteiro de demonstração (até 3 minutos)
+
+Antes: API rodando (`cd api && ./mvnw spring-boot:run`), app aberto (`npx expo start --web` ou Expo Go) e Swagger aberto em outra aba.
+
+| Tempo | Passo | O que mostrar |
 |---|---|---|
-| Início, lista, detalhe do ponto, cadastro (Issue #06) | ![](docs/testes/issue06-360x640.png) | ![](docs/testes/issue06-768x1024.png) |
-| Histórico, filtro, detalhe e edição da doação (Issue #14) | ![](docs/testes/issue14-360x640.png) | ![](docs/testes/issue14-768x1024.png) |
+| 0:00 | **Buscar** | "Ver pontos de coleta" → digitar `jardim` → 5 pontos (nome ou bairro, direto na API). Rolar a lista sem filtro: a próxima página carrega sozinha. |
+| 0:25 | **Cadastrar ponto** | "+ Novo" → Bazar Solidário Setor Sul / Rua 83, nº 450 / Setor Sul / Sáb, 8h às 14h / Coleta → "Cadastrar ponto". Aparece na lista. |
+| 0:45 | **Editar ponto** | Tocar no ponto → "Editar ponto" (mesmo formulário, preenchido) → horário "Sáb e Dom, 8h às 14h" → "Salvar alterações". O detalhe mostra o valor novo. |
+| 1:00 | **Excluir ponto** | "Excluir ponto" → confirmar → some da lista. |
+| 1:10 | **Favoritar** | Tocar no ♡ de "Armazém do Bem Campinas" → ♥. Início → "♥ Meus pontos": ele aparece, buscado na API pelo id. Recarregar o app: continua favorito. |
+| 1:35 | **Cadastrar doação** | "Registrar doação" → Roupa / 12 / escolher "Casa Solidária Vila Nova" → registrar. "Minhas doações": ela está no topo. |
+| 1:55 | **Editar doação** | Tocar na doação → "Editar doação" → 15 → "Salvar alterações". Mesmo id e mesma data de registro. |
+| 2:10 | **Excluir doação** | "Excluir doação" → confirmar → volta ao histórico sem ela. |
+| 2:20 | **400 e 404 na API** | No Swagger: `POST /api/v1/doacoes` com `"quantidade": 0` → **400** com a mensagem do campo; `GET /api/v1/pontos/00000000-0000-0000-0000-000000000000` → **404**. |
+| 2:40 | **Decisão técnica** | Explicar por que favoritos ficam no aparelho e pontos/doações no servidor (seção acima). |
+
+Esse roteiro foi executado de ponta a ponta por um script Playwright contra a API real (9 passos aprovados).
+
+## Testes realizados
+
+Status usados: **Testado e aprovado** · **Não testado** (o que não foi possível testar aqui).
+
+Os testes do app foram feitos no navegador (expo web, 390x844 e mais os tamanhos abaixo) com scripts Playwright, contra a API real rodando localmente. Os testes da API usam chamadas HTTP de verdade (`fetch`). Os detalhes e as saídas de cada teste estão nos comentários de cada issue.
+
+### API
+
+| Teste | Status |
+|---|---|
+| CRUD de pontos (GET lista, GET id, POST 201, PUT 200, DELETE 204) | Testado e aprovado |
+| CRUD de doações (GET filtro, GET id, POST 201, PUT 200, DELETE 204) | Testado e aprovado |
+| 400: cada campo de ponto vazio, tipo inválido, quantidade 0/negativa, tipo de item vazio — e nada é gravado | Testado e aprovado |
+| 404: GET, PUT e DELETE de id inexistente (pontos e doações) | Testado e aprovado |
+| Busca paginada de pontos: 10 por página, ordem por nome, `sort=bairro,asc`, filtro por nome ou bairro sem diferenciar maiúsculas, última página | Testado e aprovado |
+| Filtro de doações por tipo, da mais nova para a mais antiga | Testado e aprovado |
+| `criadoEm` definido pela API e mantido na edição | Testado e aprovado |
+| Persistência depois de reiniciar a API (H2 em arquivo) e carga inicial sem duplicar | Testado e aprovado |
+| CORS liberado (`Access-Control-Allow-Origin: *`) | Testado e aprovado |
+| Prints do Swagger de cada endpoint, com 400 e 404 | Testado e aprovado |
+
+### App
+
+| Teste | Status |
+|---|---|
+| Lista de pontos da API com indicador de carregamento na primeira página | Testado e aprovado |
+| Rolagem infinita: páginas 0, 1, 2 pedidas uma vez cada e parada na última | Testado e aprovado |
+| Busca pela API voltando à página 0 a cada busca | Testado e aprovado |
+| Detalhe pelo id e "Ponto não encontrado." no 404 | Testado e aprovado |
+| CRUD de pontos (POST, PUT com "Salvar alterações", DELETE com confirmação) | Testado e aprovado |
+| 400 real da API no formulário (mensagem do campo, dados mantidos) | Testado e aprovado |
+| Doações: cadastro (destino escolhido entre os pontos da API, envia o nome), histórico com rolagem infinita, filtro pela API, nova no topo | Testado e aprovado |
+| Doações: detalhe pelo id, "Doação não encontrada.", edição mantendo id e data, exclusão | Testado e aprovado |
+| Favoritos: ♡/♥ com 44x44, só ids no AsyncStorage, mantidos ao fechar e reabrir o navegador, "Meus pontos", ponto excluído fora, desmarcar na hora | Testado e aprovado |
+| API desligada (processo parado de verdade): lista, histórico, cadastro e exclusão mostram mensagem e não fingem sucesso | Testado e aprovado |
+| Estados de carregando, erro e vazio | Testado e aprovado |
+| `npx tsc --noEmit` sem erros | Testado e aprovado |
+| Layout em 2 tamanhos (360x640 e 768x1024): nada cortado/sobreposto/fora da tela, todo tocável ≥ 44x44 | Testado e aprovado |
+| Teclado: simulado no navegador reduzindo a janela para 360 px de altura e focando cada campo | Testado e aprovado (simulação) |
+| App no celular pela rede local (Expo Go + IP do computador) | **Não testado** (sem celular disponível) |
+| `Alert.alert` nativo (Cancelar/Excluir) no celular | **Não testado** (no navegador foi testado o `confirm` equivalente) |
+
+### Prints do layout
+
+Script que mede todos os tocáveis (mínimo 44x44), procura rolagem horizontal, elementos fora da tela e textos cortados, e simula o teclado aberto.
+
+| Telas | Print |
+|---|---|
+| N2 — pontos (lista com ♡, detalhe, formulário com validação, Meus pontos) em 360x640 | ![](docs/testes/n2-pontos-360x640.png) |
+| N2 — início, histórico, detalhe e cadastro de doação em 360x640 | ![](docs/testes/n2-doacoes-360x640.png) |
+| N2 — lista, formulário de ponto, histórico e cadastro de doação em 768x1024 | ![](docs/testes/n2-768x1024.png) |
+| Base (Issue #06) em 360x640 e 768x1024 | [360x640](docs/testes/issue06-360x640.png) · [768x1024](docs/testes/issue06-768x1024.png) |
+| N1 (Issue #14) em 360x640 e 768x1024 | [360x640](docs/testes/issue14-360x640.png) · [768x1024](docs/testes/issue14-768x1024.png) |
+
+## Limitações conhecidas
+
+- O app **não foi testado num celular**: todos os testes foram no navegador. O endereço da API está fixo em `src/services/api.ts` e precisa ser trocado pelo IP da máquina que roda a API.
+- O teclado virtual não existe no navegador; a proteção (`KeyboardAvoidingView` + rolagem) foi verificada por simulação, reduzindo a altura da janela.
+- No navegador, as confirmações usam `window.confirm`/`window.alert`; o `Alert.alert` nativo só aparece no celular.
+- A ordem por nome segue o `ORDER BY` do H2, que compara pelo código dos caracteres: nomes com acento podem vir depois do esperado (ex.: "Armazém" antes de "Armário").
+- A doação guarda o **nome** do ponto de destino (como pede o enunciado), não o id: se o ponto for renomeado ou excluído depois, a doação continua com o nome antigo.
+- Não há login: qualquer pessoa com acesso à API pode cadastrar, editar e excluir (fora do escopo do enunciado).
+- O banco H2 em arquivo serve para desenvolvimento e demonstração, não para produção.

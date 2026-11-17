@@ -18,6 +18,19 @@ npx expo start          # Expo Go no celular (QR code)
 npx expo start --web    # no navegador
 ```
 
+### Endereço da API (onde trocar o IP)
+
+O app só fala com a API por `src/services/api.ts`, e o endereço fica numa constante só:
+
+```ts
+export const API_URL = 'http://192.168.15.49:8080/api/v1';
+```
+
+- **No celular (Expo Go)**: troque `192.168.15.49` pelo IPv4 do computador que roda a API (`ipconfig` no Windows, "Endereço IPv4"). Celular e computador precisam estar na mesma rede Wi-Fi, e o firewall do Windows precisa liberar a porta 8080. Não use `localhost`: no celular ele aponta para o próprio celular.
+- **No navegador** (`npx expo start --web`) o mesmo IP funciona, porque o navegador roda no próprio computador.
+
+> **Como o app foi testado:** todos os testes do app foram feitos **no navegador** (expo web), com Playwright, porque não havia celular disponível. O teste no celular pela rede local **não foi feito**; os passos acima explicam como fazer.
+
 ## Estrutura
 
 ```

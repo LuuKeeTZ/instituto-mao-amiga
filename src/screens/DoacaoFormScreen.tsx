@@ -1,15 +1,17 @@
-import { useLayoutEffect, useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { useCallback, useEffect, useLayoutEffect, useState } from 'react';
+import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import BotaoAcao from '../components/BotaoAcao';
 import CampoTexto from '../components/CampoTexto';
 import OpcaoSelecionavel from '../components/OpcaoSelecionavel';
 import TelaFormulario from '../components/TelaFormulario';
-import { PONTOS_EXEMPLO } from '../data/pontosExemplo';
 import { TelaProps } from '../navigation/types';
+import { listarPontos } from '../services/pontosService';
 import { atualizarDoacao, salvarDoacao } from '../storage/doacoesStorage';
 import { cores, espaco } from '../theme';
 import { Doacao, DoacaoFormValores, ErrosDoacao } from '../types/doacao';
+import { Ponto } from '../types/ponto';
 import { avisar } from '../utils/dialogos';
+import { mensagemDeErro } from '../utils/mensagemErro';
 import { temErros, validarDoacao } from '../utils/validacaoDoacao';
 
 const VAZIO: DoacaoFormValores = { tipoItem: '', quantidade: '', pontoDestino: '' };
@@ -33,6 +35,22 @@ export default function DoacaoFormScreen({ navigation, route }: TelaProps<'Doaca
   );
   const [erros, setErros] = useState<ErrosDoacao>({});
   const [salvando, setSalvando] = useState(false);
+  const [pontos, setPontos] = useState<Ponto[] | null>(null);
+  const [erroPontos, setErroPontos] = useState<string | null>(null);
+
+  // Os pontos de destino vêm da API (GET /api/v1/pontos).
+  const carregarPontos = useCallback(async () => {
+    setErroPontos(null);
+    try {
+      setPontos(await listarPontos());
+    } catch (e) {
+      setErroPontos(mensagemDeErro(e));
+    }
+  }, []);
+
+  useEffect(() => {
+    carregarPontos();
+  }, [carregarPontos]);
 
   useLayoutEffect(() => {
     navigation.setOptions({ title: emEdicao ? 'Editar doação' : 'Registrar doação' });
@@ -97,8 +115,15 @@ export default function DoacaoFormScreen({ navigation, route }: TelaProps<'Doaca
       />
 
       <Text style={styles.rotulo}>Ponto que vai receber</Text>
+      {pontos === null && !erroPontos ? <ActivityIndicator color={cores.primaria} /> : null}
+      {erroPontos ? (
+        <View style={styles.opcoes}>
+          <Text style={styles.erro}>Não foi possível carregar os pontos. {erroPontos}</Text>
+          <BotaoAcao titulo="Tentar de novo" variante="secundario" onPress={carregarPontos} />
+        </View>
+      ) : null}
       <View style={styles.opcoes}>
-        {PONTOS_EXEMPLO.filter((p) => p.tipo === 'coleta').map((ponto) => (
+        {(pontos ?? []).map((ponto) => (
           <OpcaoSelecionavel
             key={ponto.id}
             rotulo={ponto.nome}

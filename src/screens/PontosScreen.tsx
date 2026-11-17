@@ -7,6 +7,7 @@ import CampoBusca from '../components/CampoBusca';
 import EstadoMensagem from '../components/EstadoMensagem';
 import PontoCard from '../components/PontoCard';
 import RodapeLista from '../components/RodapeLista';
+import { useFavoritos } from '../hooks/useFavoritos';
 import { useListaPaginada } from '../hooks/useListaPaginada';
 import { useValorAtrasado } from '../hooks/useValorAtrasado';
 import { TelaProps } from '../navigation/types';
@@ -20,6 +21,7 @@ export default function PontosScreen({ navigation }: TelaProps<'Pontos'>) {
   const lista = useListaPaginada(buscarPaginaPontos, termo);
   const { recomecar } = lista;
   const alturaCabecalho = useHeaderHeight();
+  const favoritos = useFavoritos(); // ids salvos no aparelho
 
   // Recarrega ao abrir, a cada busca nova e ao voltar de outra tela
   // (assim um ponto cadastrado, editado ou excluído já aparece certo na lista).
@@ -77,7 +79,14 @@ export default function PontosScreen({ navigation }: TelaProps<'Pontos'>) {
             </Text>
           ) : undefined
         }
-        renderItem={({ item }) => <PontoCard ponto={item} onPress={abrirDetalhe} />}
+        renderItem={({ item }) => (
+          <PontoCard
+            ponto={item}
+            onPress={abrirDetalhe}
+            favorito={favoritos.ids.has(item.id)}
+            onAlternarFavorito={favoritos.alternar}
+          />
+        )}
         ListEmptyComponent={
           <EstadoMensagem
             titulo={termo ? `Nenhum ponto encontrado para "${termo}".` : 'Nenhum ponto cadastrado ainda.'}

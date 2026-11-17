@@ -1,12 +1,14 @@
 import { useCallback, useEffect, useLayoutEffect, useState } from 'react';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
+import AvisoErro from '../components/AvisoErro';
 import BotaoAcao from '../components/BotaoAcao';
 import CampoTexto from '../components/CampoTexto';
 import OpcaoSelecionavel from '../components/OpcaoSelecionavel';
 import TelaFormulario from '../components/TelaFormulario';
 import { TelaProps } from '../navigation/types';
+import { ApiErro } from '../services/api';
+import { cadastrarDoacao, editarDoacao } from '../services/doacoesService';
 import { listarPontos } from '../services/pontosService';
-import { atualizarDoacao, salvarDoacao } from '../storage/doacoesStorage';
 import { cores, espaco } from '../theme';
 import { Doacao, DoacaoFormValores, ErrosDoacao } from '../types/doacao';
 import { Ponto } from '../types/ponto';
@@ -35,6 +37,7 @@ export default function DoacaoFormScreen({ navigation, route }: TelaProps<'Doaca
   );
   const [erros, setErros] = useState<ErrosDoacao>({});
   const [salvando, setSalvando] = useState(false);
+  const [erroEnvio, setErroEnvio] = useState<string | null>(null);
   const [pontos, setPontos] = useState<Ponto[] | null>(null);
   const [erroPontos, setErroPontos] = useState<string | null>(null);
 
@@ -62,6 +65,7 @@ export default function DoacaoFormScreen({ navigation, route }: TelaProps<'Doaca
   }
 
   async function salvar() {
+    setErroEnvio(null);
     const encontrados = validarDoacao(valores);
     setErros(encontrados);
     if (temErros(encontrados)) return;
@@ -75,17 +79,25 @@ export default function DoacaoFormScreen({ navigation, route }: TelaProps<'Doaca
     setSalvando(true);
     try {
       if (emEdicao) {
-        const atualizada = await atualizarDoacao({ ...emEdicao, ...dados });
+        const atualizada = await editarDoacao(emEdicao.id, dados);
         // Volta ao detalhe já com os valores novos.
         navigation.popTo('DoacaoDetalhe', { doacao: atualizada });
       } else {
-        const nova = await salvarDoacao(dados);
+        const nova = await cadastrarDoacao(dados);
         avisar('Doação registrada', `${nova.quantidade} × ${nova.tipoItem} para ${nova.pontoDestino}.`, () =>
           navigation.goBack(),
         );
       }
-    } catch {
-      avisar('Não foi possível salvar', 'Tente de novo. O que você digitou foi mantido.');
+    } catch (e) {
+      // Não finge sucesso: mostra o motivo e mantém o que foi digitado.
+      const campos = e instanceof ApiErro ? (e.corpo as { campos?: ErrosDoacao } | null)?.campos : undefined;
+      if (campos) setErros(campos);
+      const mensagem =
+        e instanceof ApiErro && e.status === 400
+          ? 'A API recusou a doação. Confira os campos destacados.'
+          : mensagemDeErro(e);
+      setErroEnvio(mensagem);
+      avisar('Não foi possível salvar', mensagem);
     } finally {
       setSalvando(false);
     }
@@ -133,6 +145,8 @@ export default function DoacaoFormScreen({ navigation, route }: TelaProps<'Doaca
         ))}
       </View>
       {erros.pontoDestino ? <Text style={styles.erro}>{erros.pontoDestino}</Text> : null}
+
+      <AvisoErro mensagem={erroEnvio} />
 
       <BotaoAcao
         titulo={emEdicao ? 'Salvar alterações' : 'Registrar doação'}

@@ -2,9 +2,10 @@ import { useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import BotaoAcao from '../components/BotaoAcao';
 import { TelaProps } from '../navigation/types';
-import { excluirDoacao } from '../storage/doacoesStorage';
+import { excluirDoacao } from '../services/doacoesService';
 import { cores, espaco, LARGURA_MAXIMA, raio } from '../theme';
 import { avisar, confirmarExclusao } from '../utils/dialogos';
+import { mensagemDeErro } from '../utils/mensagemErro';
 import { formatarDataHora } from '../utils/formatarData';
 
 export default function DoacaoDetalheScreen({ route, navigation }: TelaProps<'DoacaoDetalhe'>) {
@@ -14,15 +15,15 @@ export default function DoacaoDetalheScreen({ route, navigation }: TelaProps<'Do
   function pedirExclusao() {
     confirmarExclusao(
       'Excluir doação?',
-      `${doacao.quantidade} × ${doacao.tipoItem} para ${doacao.pontoDestino} será apagada deste aparelho.`,
+      `${doacao.quantidade} × ${doacao.tipoItem} para ${doacao.pontoDestino} será apagada do histórico.`,
       async () => {
         setExcluindo(true);
         try {
           await excluirDoacao(doacao.id);
           navigation.goBack();
-        } catch {
+        } catch (e) {
           setExcluindo(false);
-          avisar('Não foi possível excluir', 'Tente de novo.');
+          avisar('Não foi possível excluir', mensagemDeErro(e));
         }
       },
     );

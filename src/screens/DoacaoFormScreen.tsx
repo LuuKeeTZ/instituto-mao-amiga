@@ -3,17 +3,18 @@ import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import AvisoErro from '../components/AvisoErro';
 import BotaoAcao from '../components/BotaoAcao';
 import CampoTexto from '../components/CampoTexto';
+import EstadoMensagem from '../components/EstadoMensagem';
 import OpcaoSelecionavel from '../components/OpcaoSelecionavel';
 import TelaFormulario from '../components/TelaFormulario';
 import { TelaProps } from '../navigation/types';
 import { ApiErro } from '../services/api';
-import { cadastrarDoacao, editarDoacao } from '../services/doacoesService';
+import { buscarDoacaoPorId, cadastrarDoacao, editarDoacao } from '../services/doacoesService';
 import { listarPontos } from '../services/pontosService';
 import { cores, espaco } from '../theme';
 import { Doacao, DoacaoFormValores, ErrosDoacao } from '../types/doacao';
 import { Ponto } from '../types/ponto';
 import { avisar } from '../utils/dialogos';
-import { mensagemDeErro } from '../utils/mensagemErro';
+import { ehNaoEncontrado, mensagemDeErro } from '../utils/mensagemErro';
 import { temErros, validarDoacao } from '../utils/validacaoDoacao';
 
 const VAZIO: DoacaoFormValores = { tipoItem: '', quantidade: '', pontoDestino: '' };
@@ -28,13 +29,13 @@ function paraValores(doacao: Doacao): DoacaoFormValores {
 
 /**
  * Um formulário só para as duas situações:
- * sem parâmetro é cadastro; com `doacao` nos parâmetros é edição.
+ * sem parâmetro é cadastro; com `id` nos parâmetros é edição (os dados vêm da API).
  */
 export default function DoacaoFormScreen({ navigation, route }: TelaProps<'DoacaoForm'>) {
-  const emEdicao = route.params?.doacao;
-  const [valores, setValores] = useState<DoacaoFormValores>(
-    emEdicao ? paraValores(emEdicao) : VAZIO,
-  );
+  const idEdicao = route.params?.id;
+  const [valores, setValores] = useState<DoacaoFormValores>(VAZIO);
+  const [carregando, setCarregando] = useState(Boolean(idEdicao));
+  const [erroCarga, setErroCarga] = useState<string | null>(null);
   const [erros, setErros] = useState<ErrosDoacao>({});
   const [salvando, setSalvando] = useState(false);
   const [erroEnvio, setErroEnvio] = useState<string | null>(null);
@@ -55,9 +56,18 @@ export default function DoacaoFormScreen({ navigation, route }: TelaProps<'Doaca
     carregarPontos();
   }, [carregarPontos]);
 
+  // Na edição, preenche o formulário com a doação atual da API.
+  useEffect(() => {
+    if (!idEdicao) return;
+    buscarDoacaoPorId(idEdicao)
+      .then((doacao) => setValores(paraValores(doacao)))
+      .catch((e) => setErroCarga(ehNaoEncontrado(e) ? 'Doação não encontrada.' : mensagemDeErro(e)))
+      .finally(() => setCarregando(false));
+  }, [idEdicao]);
+
   useLayoutEffect(() => {
-    navigation.setOptions({ title: emEdicao ? 'Editar doação' : 'Registrar doação' });
-  }, [navigation, emEdicao]);
+    navigation.setOptions({ title: idEdicao ? 'Editar doação' : 'Registrar doação' });
+  }, [navigation, idEdicao]);
 
   function alterar(campo: keyof DoacaoFormValores, texto: string) {
     setValores((atual) => ({ ...atual, [campo]: texto }));
@@ -78,10 +88,10 @@ export default function DoacaoFormScreen({ navigation, route }: TelaProps<'Doaca
 
     setSalvando(true);
     try {
-      if (emEdicao) {
-        const atualizada = await editarDoacao(emEdicao.id, dados);
-        // Volta ao detalhe já com os valores novos.
-        navigation.popTo('DoacaoDetalhe', { doacao: atualizada });
+      if (idEdicao) {
+        // PUT: a API mantém o id e a data de registro.
+        await editarDoacao(idEdicao, dados);
+        avisar('Alterações salvas', `${dados.quantidade} × ${dados.tipoItem}.`, () => navigation.goBack());
       } else {
         const nova = await cadastrarDoacao(dados);
         avisar('Doação registrada', `${nova.quantidade} × ${nova.tipoItem} para ${nova.pontoDestino}.`, () =>
@@ -102,6 +112,9 @@ export default function DoacaoFormScreen({ navigation, route }: TelaProps<'Doaca
       setSalvando(false);
     }
   }
+
+  if (carregando) return <EstadoMensagem carregando titulo="Carregando doação..." />;
+  if (erroCarga) return <EstadoMensagem erro titulo="Não foi possível abrir a edição." descricao={erroCarga} />;
 
   return (
     <TelaFormulario>
@@ -149,11 +162,11 @@ export default function DoacaoFormScreen({ navigation, route }: TelaProps<'Doaca
       <AvisoErro mensagem={erroEnvio} />
 
       <BotaoAcao
-        titulo={emEdicao ? 'Salvar alterações' : 'Registrar doação'}
+        titulo={idEdicao ? 'Salvar alterações' : 'Registrar doação'}
         onPress={salvar}
         carregando={salvando}
       />
-      {emEdicao ? (
+      {idEdicao ? (
         <BotaoAcao titulo="Cancelar" variante="secundario" onPress={() => navigation.goBack()} />
       ) : null}
     </TelaFormulario>
